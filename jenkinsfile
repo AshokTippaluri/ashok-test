@@ -3,7 +3,9 @@ pipeline {
     stages {
         stage('Build and Deploy') {
             steps {
-                sh 'docker-compose up --build -d || error "Deploy failed"'
+                sh 'pwd
+                    ls '
+                // sh 'docker-compose up --build -d || error "Deploy failed"'
             }
         }
         stage('Cleanup') {
