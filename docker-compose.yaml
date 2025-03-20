@@ -4,7 +4,7 @@ services:
   web:
     build:
       context: .  # Build from the root-level Dockerfile
-    container_name: web
+    container_name: nodejs
     ports:
       - "8085:8080"
     depends_on:
