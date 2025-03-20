@@ -7,9 +7,8 @@ LABEL maintainer="Ashok Tippaluri"
 # Set working directory inside the container
 WORKDIR /app
 
-RUN useradd -r nodeuser && chown -R nodeuser /app
-
-
+# RUN useradd -r nodeuser && chown -R nodeuser /app
+RUN useradd -m -r -s /bin/bash nodeuser && chown -R nodeuser:nodeuser /app
 USER nodeuser
 
 # Copy package.json and install dependencies
