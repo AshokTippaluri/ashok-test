@@ -1,25 +1,16 @@
 pipeline {
     agent any
-    
-    // stages {
-    //     stage('Checkout') {
-    //         steps {
-    //             checkout scm
-    //         }
-    //     }
-
-    stages {   
-        stage('Build') {
+    stages {
+        stage('Build and Deploy') {
             steps {
-                script {
-                    pwd
-                    ls
-
-                    }
-                }
+                sh 'docker-compose up --build -d || error "Deploy failed"'
             }
         }
-        
-        // Continue with other stages...
-    
+        stage('Cleanup') {
+            steps {
+                sh 'docker-compose down -v || error "Cleanup failed"'
+            }
+            
+        }
+    }
 }
