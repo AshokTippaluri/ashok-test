@@ -11,12 +11,10 @@ ENV MONGO_INITDB_ROOT_USERNAME=admin \
 # Copy initialization script
 COPY init.js /docker-entrypoint-initdb.d/
 
-RUN useradd -r mongodbuser && chown -R mongodbuser /data/db
-USER mongodbuser
-
 # Expose MongoDB port
 EXPOSE 27017
 
-# Healthcheck to ensure MongoDB is running
+# Healthcheck to ensure MongoDB is running properly
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD mongosh --quiet --eval "db.adminCommand('ping')" || exit 1
+
