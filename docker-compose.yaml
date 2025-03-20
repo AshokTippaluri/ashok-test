@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   web:
-    build: .  # Build from the root-level Dockerfile
+    build:
+      context: .  # Build from the root-level Dockerfile
     container_name: web
     ports:
       - "8085:8080"
@@ -14,20 +15,21 @@ services:
       - app_network
 
   mongodb:
-    build: ./mongodb  # Build from the custom MongoDB Dockerfile in the 'mongodb' directory
+    build:
+      context: ./mongodb  # Build from the custom MongoDB Dockerfile in the 'mongodb' directory
+      args:
+        MONGO_ROOT_PASSWORD: secret  # Pass the build-time argument for MongoDB password
     container_name: mongodb
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
-
-
     networks:
       - app_network
 
-
 volumes:
   mongo_data:
+    name: webMongo
 
 networks:
   app_network:

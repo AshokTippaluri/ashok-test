@@ -4,10 +4,12 @@ FROM mongo:6.0
 # Metadata for better documentation
 LABEL maintainer="Ashok Tippaluri"
 
+ARG MONGO_ROOT_PASSWORD
 # Set environment variables for database and authentication
 ENV MONGO_INITDB_ROOT_USERNAME=admin \
-    MONGO_INITDB_ROOT_PASSWORD=secret \
+    MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD} \
     MONGO_INITDB_DATABASE=mydb
+    
 # Copy initialization script
 COPY init.js /docker-entrypoint-initdb.d/
 
