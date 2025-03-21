@@ -9,8 +9,7 @@ pipeline {
     }
 
     environment {
-        NETWORK_NAME = 'withDockerfile'
-        VOLUME_NAME = 'withDockerfile'
+        NAME_SPACE = 'withk8s'
         MONGO_IMAGE = 'mongodb'
         NODEJS_IMAGE = 'nodejs'
     }
@@ -29,10 +28,10 @@ pipeline {
             steps {
                 script {
                     // Build Node.js image
-                    sh 'docker build -t ${NODEJS_IMAGE} ./withDockerfile/'
+                    sh 'docker build -t ${NODEJS_IMAGE} ./withk8/'
 
                     // Build MongoDB image
-                    sh 'docker build -t ${MONGO_IMAGE} ./withDockerfile/mongodb/'
+                    sh 'docker build -t ${MONGO_IMAGE} ./withk8/mongodb/'
 
                     // List images to confirm
                     sh 'docker images'
@@ -40,50 +39,42 @@ pipeline {
             }
         }
 
-        stage('Create Network and Volume') {
+        stage('Load Image to Kind') {
             when {
                 equals expected: 'build', actual: "${params.ACTION}"
             }
             steps {
                 script {
                     // Create network and volume
-                    sh 'docker network create ${NETWORK_NAME}'
-                    sh 'docker volume create ${VOLUME_NAME}'
-
-                    // Verify network and volume creation
-                    sh 'docker network ls'
-                    sh 'docker volume ls'
+                    sh 'kind load docker-image ${NODEJS_IMAGE}'
+                    sh 'kind load docker-image ${MONGO_IMAGE}'
                 }
             }
         }
 
-        stage('Run Containers') {
+        stage('Apply Kubernetes Manifests') {
             when {
                 equals expected: 'build', actual: "${params.ACTION}"
             }
             steps {
                 script {
-                    // Run MongoDB container
-                    sh '''docker run -d --name mongodb \
-                        --network ${NETWORK_NAME} \
-                        -e MONGO_INITDB_ROOT_USERNAME=admin \
-                        -e MONGO_INITDB_ROOT_PASSWORD=secret \
-                        -v ${VOLUME_NAME}:/data/db \
-                        -p 27017:27017 \
-                        ${MONGO_IMAGE}'''
-
-                    // Run Node.js container
-                    sh '''docker run -d --name nodejs \
-                        --network ${NETWORK_NAME} \
-                        -e MONGO_URL="mongodb://admin:secret@mongodb:27017/mydb" \
-                        -p 8085:8080 \
-                        ${NODEJS_IMAGE}'''
-
-                    // Verify containers are running
-                    sh 'docker ps'
+                    sh "kubectl apply -f withk8/k8s/withk8ns.yaml"
+                    sh "kubectl apply -f withk8/k8s/mongodb-deployment.yaml"
+                    sh "kubectl apply -f withk8/k8s/web-deployment.yaml"
                 }
             }
         }
+
+        stage('Wait for Pods to be Ready') {
+            steps {
+                script {
+                    sh "kubectl wait --for=condition=ready pod -l app=nodejs -n ${NAMESPACE} --timeout=120s"
+                    sh "kubectl wait --for=condition=ready pod -l app=mongodb -n ${NAMESPACE} --timeout=120s"
+                }
+            }
+        }
+
+
 
         stage('Health Check') {
             when {
@@ -92,6 +83,7 @@ pipeline {
             steps {
                 script {
                     // Verify the Node.js app
+                    sh "kubectl port-forward svc/nodejs 8085:8080 -n ${NAMESPACE} &"
                     sh 'curl -f http://localhost:8085/items || exit 1'
 
                     // Verify MongoDB connection from Node.js container
@@ -107,17 +99,7 @@ pipeline {
             steps {
                 script {
                     // Stop and remove containers
-                    sh 'docker stop nodejs mongodb || true'
-                    sh 'docker rm nodejs mongodb || true'
-
-                    // Remove the network and volume
-                    sh 'docker network rm ${NETWORK_NAME} || true'
-                    sh 'docker volume rm ${VOLUME_NAME} || true'
-
-                    // Verify cleanup
-                    sh 'docker ps -a'
-                    sh 'docker network ls'
-                    sh 'docker volume ls'
+                    sh "kubectl delete namespace ${NAMESPACE}"
                 }
             }
         }
@@ -127,6 +109,12 @@ pipeline {
         always {
             // Cleanup any running containers and networks if necessary
             sh 'docker system prune -a -f --volumes|| true'
+        }
+        success {
+            echo "🎉 Deployment Successful!"
+        }
+        failure {
+            echo "❌ Deployment Failed!"
         }
     }
 }
