@@ -126,7 +126,7 @@ pipeline {
     post {
         always {
             // Cleanup any running containers and networks if necessary
-            sh 'docker system prune -f || true'
+            sh 'docker system prune -a -f --volumes|| true'
         }
     }
 }
