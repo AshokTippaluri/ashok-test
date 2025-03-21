@@ -13,6 +13,7 @@ pipeline {
         stage('Cleanup Docker') {
             steps {
                 script {
+                    sh 'docker stop nodejs mongodb'
                     sh 'docker image prune -a -f'
                     sh 'docker system prune -a -f --volumes'
                 }
