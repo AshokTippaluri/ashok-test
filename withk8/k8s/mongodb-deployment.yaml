@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mongodb
-  namespace: test-namespace
+  namespace: withk8s
 spec:
   replicas: 1
   selector:
@@ -15,23 +15,40 @@ spec:
     spec:
       containers:
       - name: mongodb
-        image: mongo:4.4 # Update with your image
+        image: mongodb  # Official MongoDB image
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 27017
         env:
-        - name: MONGO_INITDB_ROOT_USERNAME
-          value: "admin"
         - name: MONGO_INITDB_ROOT_PASSWORD
           value: "secret"
         volumeMounts:
-        - name: mongo-data
+        - name: mongo-storage
           mountPath: /data/db
+      volumes:
+      - name: mongo-storage
+        persistentVolumeClaim:
+          claimName: mongo-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+  namespace: withk8s
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: mongodb
-  namespace: test-namespace
+  namespace: withk8s
 spec:
   selector:
     app: mongodb
@@ -39,16 +56,4 @@ spec:
   - protocol: TCP
     port: 27017
     targetPort: 27017
-  type: ClusterIP
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mongo-data
-  namespace: test-namespace
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+  clusterIP: None  # Headless service for internal communication
