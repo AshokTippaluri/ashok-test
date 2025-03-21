@@ -1,5 +1,19 @@
 pipeline {
     agent any
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5')) // Keep only the last 5 builds
+    }
+
+    parameters {
+        choice(name: 'ACTION', choices: ['build', 'destroy'], description: 'Select build or destroy operation')
+    }
+
+    environment {
+        NETWORK_NAME = 'withDockerfile'
+        VOLUME_NAME = 'withDockerfile'
+        MONGO_IMAGE = 'mongodb'
+        NODEJS_IMAGE = 'nodejs'
+    }
 
     stages {
         stage('Checkout') {
@@ -7,49 +21,112 @@ pipeline {
                 git 'https://github.com/AshokTippaluri/ashok-test.git'
             }
         }
-        
-        stage('Cleanup Docker') {
+
+        stage('Build Docker Images') {
+            when {
+                equals expected: 'build', actual: "${params.ACTION}"
+            }
             steps {
                 script {
-                    sh 'docker image prune -a -f'
-                    sh 'docker system prune -a -f --volumes'
+                    // Build Node.js image
+                    sh 'docker build -t ${NODEJS_IMAGE} ./withDockerfile/'
+
+                    // Build MongoDB image
+                    sh 'docker build -t ${MONGO_IMAGE} ./withDockerfile/mongodb/'
+
+                    // List images to confirm
+                    sh 'docker images'
                 }
             }
         }
-        
-        stage('Run Containers') {
+
+        stage('Create Network and Volume') {
+            when {
+                equals expected: 'build', actual: "${params.ACTION}"
+            }
             steps {
                 script {
-                    sh 'docker compose -f docker-compose.yaml up -d'
+                    // Create network and volume
+                    sh 'docker network create ${NETWORK_NAME}'
+                    sh 'docker volume create ${VOLUME_NAME}'
+
+                    // Verify network and volume creation
+                    sh 'docker network ls'
+                    sh 'docker volume ls'
+                }
+            }
+        }
+
+        stage('Run Containers') {
+            when {
+                equals expected: 'build', actual: "${params.ACTION}"
+            }
+            steps {
+                script {
+                    // Run MongoDB container
+                    sh '''docker run -d --name mongodb \
+                        --network ${NETWORK_NAME} \
+                        -e MONGO_INITDB_ROOT_USERNAME=admin \
+                        -e MONGO_INITDB_ROOT_PASSWORD=secret \
+                        -v ${VOLUME_NAME}:/data/db \
+                        -p 27017:27017 \
+                        ${MONGO_IMAGE}'''
+
+                    // Run Node.js container
+                    sh '''docker run -d --name nodejs \
+                        --network ${NETWORK_NAME} \
+                        -e MONGO_URL="mongodb://admin:secret@mongodb:27017/mydb" \
+                        -p 8085:8080 \
+                        ${NODEJS_IMAGE}'''
+
+                    // Verify containers are running
+                    sh 'docker ps'
                 }
             }
         }
 
         stage('Health Check') {
-            steps {
-                script {
-                    sh 'curl -f http://localhost:8085/items || exit 1'
-                }
+            when {
+                equals expected: 'build', actual: "${params.ACTION}"
             }
-        }
-
-        stage('Container Connectivity Check') {
             steps {
                 script {
-                    // Check if the web container can reach MongoDB internally
-                    sh 'docker exec web ping -c 4 mongodb'
-                    // Alternatively, test MongoDB connection from within the web container
-                    sh 'docker exec web curl -f mongodb:27017 || echo "MongoDB connection failed"'
+                    // Verify the Node.js app
+                    sh 'curl -f http://localhost:8085/items || exit 1'
+
+                    // Verify MongoDB connection from Node.js container
+                    sh 'docker exec nodejs ping -c 4 mongodb'
                 }
             }
         }
 
         stage('Cleanup') {
+            when {
+                equals expected: 'destroy', actual: "${params.ACTION}"
+            }
             steps {
                 script {
-                    sh 'docker compose -f docker-compose.yaml down -v'
+                    // Stop and remove containers
+                    sh 'docker stop nodejs mongodb || true'
+                    sh 'docker rm nodejs mongodb || true'
+
+                    // Remove the network and volume
+                    sh 'docker network rm ${NETWORK_NAME} || true'
+                    sh 'docker volume rm ${VOLUME_NAME} || true'
+
+                    // Verify cleanup
+                    sh 'docker ps -a'
+                    sh 'docker network ls'
+                    sh 'docker volume ls'
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            // Cleanup any running containers and networks if necessary
+            sh 'docker system prune -f || true'
         }
     }
 }
