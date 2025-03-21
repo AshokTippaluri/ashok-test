@@ -1,10 +1,12 @@
 pipeline {
     agent any
-
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5')) // Keep only the last 5 builds
+    }
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/AshokTippaluri/ashok-test.git'
+                git branch: 'main', url: 'https://github.com/AshokTippaluri/ashok-test.git'
             }
         }
         
@@ -21,6 +23,7 @@ pipeline {
             steps {
                 script {
                     sh 'docker compose -f docker-compose.yaml up -d'
+                    sh 'sleep 20'
                 }
             }
         }
