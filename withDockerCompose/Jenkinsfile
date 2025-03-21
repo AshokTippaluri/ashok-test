@@ -40,9 +40,9 @@ pipeline {
             steps {
                 script {
                     // Check if the web container can reach MongoDB internally
-                    sh 'docker exec web ping -c 4 mongodb'
+                    sh 'docker exec nodejs ping -c 4 mongodb'
                     // Alternatively, test MongoDB connection from within the web container
-                    sh 'docker exec web curl -f mongodb:27017 || echo "MongoDB connection failed"'
+                    sh 'docker exec nodejs curl -f mongodb:27017 || echo "MongoDB connection failed"'
                 }
             }
         }
@@ -50,7 +50,7 @@ pipeline {
         stage('Cleanup') {
             steps {
                 script {
-                    sh 'docker compose -f docker-compose.yaml down -v'
+                    sh 'docker compose -f withDockerCompose/docker-compose.yaml down -v'
                 }
             }
         }
