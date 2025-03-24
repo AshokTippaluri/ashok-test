@@ -1,7 +1,18 @@
 # ashok-test
 
-an repo for learning purpose
+An repo for learning purpose
 ---------------------------------------------------------------------------------------------------------
+
+
+# 🚀 Git Learning Project: Docker, Docker Compose & Kubernetes  
+
+This project is part of my learning journey to understand containerization and deployment using Docker, Docker Compose, and Kubernetes. The goal is to explore how applications evolve from simple containerized setups to fully managed orchestration in Kubernetes.
+
+Each approach includes a Node.js web application with MongoDB, starting with manual Dockerfile-based deployments, progressing to Docker Compose for multi-container management, and finally deploying in Kubernetes for scalability. Additionally, Jenkins integration is included to automate CI/CD pipelines.
+
+This repository serves as a hands-on practice space for mastering DevOps concepts and improving deployment workflows. 🚀
+
+
 
 Ashok's Git Learning Project
 
