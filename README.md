@@ -41,8 +41,23 @@ Kubernetes (container orchestration)
     ├── k8s/                    # Kubernetes YAML manifests  
     │   ├── mongodb-deployment.yaml  # MongoDB Deployment  
     │   ├── web-deployment.yaml      # Web app Deployment  
-    │   ├── withk8mongoSF.yaml       # Stateful MongoDB Deployment  
+    │   ├── withk8mongoSF.yaml       # Stateful MongoDB Deployment  working
     │   └── withk8ns.yaml            # Namespace setup  
 
+
+
+
+
+
+With Docker compose
+
+
+
+![image](https://github.com/user-attachments/assets/caf03772-3e25-42dd-a31e-aef4bcd8ef2b)
+
+
+with dockerfile
+
+![image](https://github.com/user-attachments/assets/06054109-a676-47ad-9e5a-13a1fa435684)
 
 
