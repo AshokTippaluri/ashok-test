@@ -1,0 +1,21 @@
+app:
+  name: my-app
+  namespace: withHelm
+  replicas: 2
+
+web:
+  image: nodejs
+  containerName: nodejs
+  port: 8080
+  servicePort: 8085
+  mongoUrl: "mongodb://admin:secret@mongodb:27017/mydb"
+
+mongodb:
+  image: mongodb
+  containerName: mongodb
+  port: 27017
+  servicePort: 27017
+  rootPassword: secret
+  volume:
+    name: mongo-data
+    size: 1Gi
