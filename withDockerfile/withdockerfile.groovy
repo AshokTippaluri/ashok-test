@@ -1,4 +1,14 @@
 node {
+
+    // Discard old builds, keeping only the last 5
+    properties([
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+    ])
+
+    parameters([
+            choice(name: 'ACTION', choices: ['build', 'destroy'], description: 'Select build or destroy operation')
+    ])
+
     def ACTION = params.ACTION ?: 'build'
     def NETWORK_NAME = 'withDockerfile'
     def VOLUME_NAME = 'withDockerfile'
