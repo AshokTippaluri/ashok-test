@@ -2,6 +2,13 @@ import jenkins.model.*
 import hudson.model.*
 
 // Get Jenkins instance
+
+try {
+    stage('Checkout') {
+            git branch: 'main', url: 'https://github.com/AshokTippaluri/ashok-test.git'
+        }
+}
+
 def jenkins = Jenkins.instance
 
 // Define job name
