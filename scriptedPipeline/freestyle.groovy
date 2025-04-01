@@ -5,7 +5,7 @@ import hudson.model.*
 def jenkins = Jenkins.instance
 
 // Define job name
-def jobName = 'My_New_Job'
+def jobName = 'ashok_Job'
 
 // Check if job already exists
 if (jenkins.getItem(jobName)) {
