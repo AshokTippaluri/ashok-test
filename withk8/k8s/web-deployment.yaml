@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: nodejs
-        image: nodejs:latest
+        image: nodejs
         imagePullPolicy: IfNotPresent #it will check the local first
         ports:
         - containerPort: 8080
